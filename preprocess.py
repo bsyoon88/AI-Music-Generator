@@ -1,5 +1,6 @@
 import os
 import music21 as m21
+import json
 
 KERN_DATASET_PATH="deutschl/test"
 ACCEPTABLE_DURATION=[
@@ -13,7 +14,10 @@ ACCEPTABLE_DURATION=[
     4
 ]
 
-
+SAVE_DIR='dataset'
+SINGLE_FILE_DATASET="file_dataset"
+MAPPING_PATH="mapping.json"
+SEQUENCE_LENGTH=64
 
 
 
@@ -49,7 +53,7 @@ def transpose(song):
     if not isinstance(key,m21.key.Key):
         key = song.analyze("key")
 
-    print(key)
+
     #get/calculate interval for transposition. E.g., Bmaj -> Cmaj
     if key.mode =='major':
         interval = m21.interval.Interval(key.tonic,m21.pitch.Pitch('C'))
@@ -66,6 +70,48 @@ def transpose(song):
 
 
 
+def encode_song(song,time_step=0.25):
+    # p=60,d=1.0 ->[60,"_","_","_"]
+
+    encoded_song=[]
+
+    for event in song.flat.notesAndRests:
+        
+        #handling notes
+        if isinstance(event,m21.note.Note):
+            symbol=event.pitch.midi #60
+        #handling rest 
+        elif isinstance(event,m21.note.Rest):
+            symbol="r"
+
+        #convert the note/rest into time series notation
+        steps= int(event.duration.quarterLength/time_step)   
+        for step in range(steps):
+            if step==0:
+                encoded_song.append(symbol)
+            else:
+                encoded_song.append("_")
+
+    #cast encoded song to str
+    encoded_song=' '.join(map(str,encoded_song))
+
+    return encoded_song
+
+
+
+def load(file_path):
+    with open(file_path,'r') as fp:
+        song=fp.read()
+    return song
+
+
+
+
+
+
+
+
+
 def preprocess(dataset_path):   
     pass
 
@@ -76,31 +122,73 @@ def preprocess(dataset_path):
     print(f"Loaded {len(songs)} songs.")
 
 
-    for song in songs:
+    for i,song in enumerate(songs):
 
         #filter out songs that have non-acceptable duration
         if not has_acceptable_duration(song,ACCEPTABLE_DURATION):
             continue
 
-         #transpose songs to Cmaj/Amin
+        #transposme songs to Caj/Amin
         song= transpose(song)
 
+        #encode songs with music time series representaion
+        encoded_song=encode_song(song)
+
+        #save song to text file
+        save_path=os.path.join(SAVE_DIR, str(i))
+        with open(save_path,'w') as fp:
+            fp.write(encoded_song)
 
 
-    #encode songs with music time series representaion
-
-    #save song to text file
 
 
+
+
+def create_single_file_dataset(dataset_path, file_dataset_path,sequence_length):
+
+    new_song_delimiter='/ ' *sequence_length
+    songs=''
+    #load encoded songs and add delimiters
+    for path, _,files in os.walk(dataset_path):
+        for file in files:
+            file_path=os.path.join(path,file)
+            song=load(file_path)
+            songs=songs + song + " " +new_song_delimiter
+
+    songs=songs[:-1]
+
+    #save string that contain all dataset
+    with open(file_dataset_path,'w') as fp:
+        fp.write(songs)
+
+    return songs 
+
+
+
+
+def create_mapping(songs,mapping_path):
+    mappings={}
+    #identify the vocabulary
+    songs=songs.split()
+    vocabulary=list(set(songs))
+
+    #create mapping
+    for i,symbol in enumerate(vocabulary):
+        mappings[symbol]= i
+    
+    #save vocabulaty in JSON file
+    with open(mapping_path,'w') as fp:
+        json.dump(mappings,fp,indent=4)
+
+
+
+
+def main():
+    preprocess(KERN_DATASET_PATH)
+    songs= create_single_file_dataset(SAVE_DIR,SINGLE_FILE_DATASET,SEQUENCE_LENGTH)
+    create_mapping(songs,MAPPING_PATH)
+
+
+   
 if __name__=="__main__":
-    songs=load_songs_in_kern(KERN_DATASET_PATH)
-    print(f"Loaded {len(songs)} songs")
-    print(songs)
-    song=songs[0]
-
-    print(f"Has acceptable duration?{has_acceptable_duration(song,ACCEPTABLE_DURATION)}")
-    transposed_song=transpose(song)
-
-    
-    transposed_song.show()
-    
+    main()
