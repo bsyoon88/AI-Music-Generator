@@ -7,7 +7,7 @@ import numpy as np
 #All the global variables______________________________
 
 
-KERN_DATASET_PATH="deutschl/test"
+KERN_DATASET_PATH="deutschl/erk"
 ACCEPTABLE_DURATION=[
     0.25,
     0.5,
