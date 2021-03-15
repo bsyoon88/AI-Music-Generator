@@ -1,6 +1,11 @@
 import os
 import music21 as m21
 import json
+import tensorflow.keras as keras
+import numpy as np
+
+#All the global variables______________________________
+
 
 KERN_DATASET_PATH="deutschl/test"
 ACCEPTABLE_DURATION=[
@@ -21,6 +26,12 @@ SEQUENCE_LENGTH=64
 
 
 
+#_____________________________________________________
+
+
+
+#Function to load kern files song
+
 def load_songs_in_kern(dataset_path):
 
     songs=[]
@@ -34,6 +45,12 @@ def load_songs_in_kern(dataset_path):
     return songs             
 
 
+#_____________________________________________________
+
+
+
+#Fuction to clear out songs with unaccpetable duration
+
 
 def has_acceptable_duration(song,acceptable_duration):
     for note in song.flat.notesAndRests:
@@ -41,6 +58,14 @@ def has_acceptable_duration(song,acceptable_duration):
             return False
     return True
 
+#_____________________________________________________
+
+
+#Fuction to transpose the songs to
+#Major key songs will be transposed to Cmaj
+#Minor key songs will be transposed to Amin
+#We done this step to make model simple and more optimal
+#As for model to learn 24 key is difficult so we used only 2 keys
 
 
 def transpose(song):
@@ -66,9 +91,15 @@ def transpose(song):
 
     return transposed_song
 
+#_____________________________________________________
 
 
-
+#Encoding music to human understable lang.
+#Here every pitch/note is given its MIDI number 
+#and time is representend by '_'
+#E.g if we are given [60,"_","_","_"]
+#that means C4 is played as whole note
+#here 'r' refers to rest
 
 def encode_song(song,time_step=0.25):
     # p=60,d=1.0 ->[60,"_","_","_"]
@@ -97,12 +128,18 @@ def encode_song(song,time_step=0.25):
 
     return encoded_song
 
+#_____________________________________________________
 
+
+
+
+#Simple load file function to load any file
 
 def load(file_path):
     with open(file_path,'r') as fp:
         song=fp.read()
     return song
+#_____________________________________________________
 
 
 
@@ -111,6 +148,8 @@ def load(file_path):
 
 
 
+#Main preprocessing data function where each song is passed in above functions and processed as 
+#each step as functions given above
 
 def preprocess(dataset_path):   
     pass
@@ -140,8 +179,11 @@ def preprocess(dataset_path):
             fp.write(encoded_song)
 
 
+#_____________________________________________________
 
 
+#creating single file with delimiter so that it can be added in our model just like we 
+#add csv file we have to create a single file
 
 
 def create_single_file_dataset(dataset_path, file_dataset_path,sequence_length):
@@ -163,6 +205,15 @@ def create_single_file_dataset(dataset_path, file_dataset_path,sequence_length):
 
     return songs 
 
+#_____________________________________________________
+
+
+
+
+#Mapping function is used to create json file that stores the value of each note/rest and
+#create the vocabulary that will help us to map every note/rest to machine learning format
+#i.e input->targets type 
+
 
 
 
@@ -181,12 +232,73 @@ def create_mapping(songs,mapping_path):
         json.dump(mappings,fp,indent=4)
 
 
+#_____________________________________________________
 
+
+
+
+#Conveting songs to int using mapping so that we can give this format as input to our LSTM model
+
+def convert_songs_to_int(songs):
+    int_songs=[]
+
+    #load mappings
+    with open(MAPPING_PATH,'r') as fp:
+        mappings=json.load(fp)
+        
+    #cast songs string to list 
+    songs=songs.split()
+
+    #map songs to int
+    for symbol in songs:
+        int_songs.append(mappings[symbol])
+        
+    return int_songs
+
+#_____________________________________________________
+
+
+#Genrating training sequence that we'll add to our model 
+
+def generate_training_sequences(sequence_length):
+    pass
+    # [11,12,13,14,....] ->i:[11,12] ,t:13 ; i:[12,13],t:14 ;.....
+    
+    #load songs and map them into int
+    songs=load(SINGLE_FILE_DATASET) 
+    int_songs=convert_songs_to_int(songs)
+
+    #genrate the training sequence
+    # 100 symbol,sequence_length=64,100-64=36 sequences 
+    inputs=[]
+    targets=[]
+    num_sequence=len(int_songs)- sequence_length
+    for i in range(num_sequence):
+        inputs.append(int_songs[i:i+sequence_length])
+        targets.append(int_songs[i+sequence_length])
+
+
+    #one-hot-encode the sequence
+    #inputs:(# of sequences,sequence_length,vocabulary)
+    #[ [0,1,2], [1,1,2]]->[ [ [1,0,0],[0,1,0],[0,0,1] ] , [ [] ] ]
+    vocabulary_size=len(set(int_songs))
+    inputs=keras.utils.to_categorical(inputs,num_classes=vocabulary_size)
+    targets=np.array(targets) 
+    
+    return inputs,targets
+        
+#_____________________________________________________
+
+
+
+#MAIN function
 
 def main():
     preprocess(KERN_DATASET_PATH)
     songs= create_single_file_dataset(SAVE_DIR,SINGLE_FILE_DATASET,SEQUENCE_LENGTH)
     create_mapping(songs,MAPPING_PATH)
+    inputs,targets=generate_training_sequences(SEQUENCE_LENGTH)
+
 
 
    
