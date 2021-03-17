@@ -1,6 +1,6 @@
 # AI-Music-Generator
 
-It is an program that create the melodies using AI <br>
+It is an program that create the melodies using AI 
 For the project I used simple concept of RNN-LSTM network and trained by model on that
 
 ## Installation
@@ -23,5 +23,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 Please make sure to update tests as appropriate.
 
-## License
-[MIT](https://choosealicense.com/licenses/mit/)
+
