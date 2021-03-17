@@ -1,7 +1,7 @@
 # AI-Music-Generator
 
 It is an program that create the melodies using AI 
-For the project I used simple concept of RNN-LSTM network and trained by model on that
+For the project I used simple concept of RNN-LSTM network and trained by model on that you can read about LSTM network here (https://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 
 ## Installation
 
