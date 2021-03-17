@@ -8,7 +8,7 @@ Libraries used are:-
 <ul>
   <li>tensorflow>=2.4
   <li>music21
-    
+</ul>
 For the dataset I used krn files of folk songs download from https://kern.humdrum.org/cgi-bin/browse?l=essen%2Feuropa%2Fdeutschl .I only used "deutschl\erk" folder to train model.
 ## Installation
 
