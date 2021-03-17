@@ -6,8 +6,8 @@ For programming following model I used simple concept of RNN-LSTM network.You ca
 ##Libraries And Dataset
 Libraries used are:-
 <ul>
-  tensorflow>=2.4
-  music21
+  <li>tensorflow>=2.4
+  <li>music21
 
 ## Installation
 
