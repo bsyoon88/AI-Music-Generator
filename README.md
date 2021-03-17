@@ -1,6 +1,7 @@
 # AI-Music-Generator
 
-Foobar is a Python library for dealing with word pluralization.
+It is an program that create the melodies using AI <br>
+For the project I used simple concept of RNN-LSTM network and trained by model on that
 
 ## Installation
 
