@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Mar 15 22:36:55 2021
-
-@author: Raj
-"""
-
 from preprocess import generate_training_sequences,SEQUENCE_LENGTH 
 import tensorflow.keras as keras
 
